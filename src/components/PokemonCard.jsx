@@ -70,7 +70,6 @@ const PokemonCard = ({ pokemon, onClick }) => {
           decoding="async"
           width={96}
           height={96}
-          style={{ viewTransitionName: `sprite-${pokemon.pokedexNumber}`, contain: 'layout' }}
           className="absolute -top-12 w-24 h-24 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]
             group-hover:scale-110 group-hover:-translate-y-1 will-change-transform
             transition-transform duration-200 z-10"
