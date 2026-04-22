@@ -3,10 +3,13 @@
 A modern, high-end "OLED true-black" Pokédex built with React, Vite, and Tailwind CSS. Featuring 3D layered Pokémon cards, a sleek side-drawer detail view, and advanced filtering capabilities.
 
 ## ✨ Features
+
 - **OLED True-Black Aesthetics:** Deep `#000` backgrounds with gorgeous radial gradients based on Pokémon types.
-- **3D Pop-out Cards:** Sprites extend past their grid containers for a dynamic, interactive feel.
-- **Refined Side-Drawer:** A smooth, full-height side-drawer for in-depth stat viewing.
-- **Advanced Filtering & Sorting:** Search by name, filter by type, legendary status, or generation, and sort dynamically.
+- **Gyroscopic 3D Tilt Cards:** Interactive 3D pop-out sprites that react to cursor movement with dynamic glare overlays.
+- **Interactive Radar Charts:** Beautiful Spider/Radar charts visualizing Pokémon base stats scientifically.
+- **Team Builder & Synergy Matrix:** Drag-and-drop team construction with an algorithmic weakness and resistance coverage matrix.
+- **Refined Side-Drawer:** A smooth, full-height side-sliding modal for seamless data viewing.
+- **Advanced Navigation & Filtering:** Swipeable pill-navigation for Generations, plus robust search, type filtering, and smart sorting.
 
 ## 🚀 Tech Stack
 - **Framework:** React + Vite
@@ -51,5 +54,6 @@ graph TD
    npm run dev
    ```
 
-## 🔮 Future Roadmap
-Check out the `design_plan.md` for our upcoming next-gen features including Team Builders, Gyroscopic 3D Tilt Cards, and Interactive Radar Charts!
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the issues page if you want to contribute.
