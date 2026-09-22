@@ -69,6 +69,7 @@ export function usePokemon() {
             percentageMale: parseNumber(row.percentage_male),
             generation: parseNumber(row.generation),
             isLegendary: row.is_legendary === '1',
+            baseNumber: parseNumber(row.base_number),
             against,
           }
         }).filter(p => p.pokedexNumber && p.name)

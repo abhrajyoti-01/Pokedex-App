@@ -33,6 +33,8 @@ export const generationLabels = {
   5: 'Gen V (Unova)',
   6: 'Gen VI (Kalos)',
   7: 'Gen VII (Alola)',
+  8: 'Gen VIII (Galar)',
+  9: 'Gen IX (Paldea)',
 }
 
 export function getStatColor(value) {

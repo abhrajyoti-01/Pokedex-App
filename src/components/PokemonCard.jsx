@@ -1,28 +1,32 @@
-import { useCallback, useRef, useEffect } from 'react'
+import { useCallback, useRef, useEffect, memo } from 'react'
 import { typeColors, getSpriteUrl } from '../utils/typeColors'
 import TypeBadge from './TypeBadge'
 
-function applyTilt(card, rotateX, rotateY) {
+const MAX_TILT = 12
+const GYROSCOPE_SCALE = 0.3
+
+function applyTilt(card, rotateX, rotateY, px, py) {
   if (!card) return
-  card.style.transform = `perspective(600px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
+  card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
+  card.style.setProperty('--px', px.toFixed(3))
+  card.style.setProperty('--py', py.toFixed(3))
   const glare = card.querySelector('[data-glare]')
   if (glare) {
-    glare.style.background = `linear-gradient(${135 + rotateY * 5}deg, rgba(255,255,255,0.12) 0%, transparent 60%)`
+    glare.style.background = `radial-gradient(circle at ${(px + 0.5) * 100}% ${(py + 0.5) * 100}%, rgba(255,255,255,0.16), transparent 55%)`
     glare.style.opacity = '1'
   }
 }
 
 function resetTilt(card) {
   if (!card) return
-  card.style.transform = 'perspective(600px) rotateX(0deg) rotateY(0deg)'
+  card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg)'
+  card.style.setProperty('--px', '0')
+  card.style.setProperty('--py', '0')
   const glare = card.querySelector('[data-glare]')
   if (glare) glare.style.opacity = '0'
 }
 
-const MAX_TILT = 15
-const GYROSCOPE_SCALE = 0.3
-
-const PokemonCard = ({ pokemon, onClick }) => {
+const PokemonCard = memo(({ pokemon, onClick }) => {
   const cardRef = useRef(null)
   const gyroActiveRef = useRef(false)
   const glow = typeColors[pokemon.type1]?.bg || '#666'
@@ -42,7 +46,7 @@ const PokemonCard = ({ pokemon, onClick }) => {
         const beta = Math.max(-45, Math.min(45, (e.beta || 0) - 45))
         const rotateX = -(beta / 45) * MAX_TILT * GYROSCOPE_SCALE
         const rotateY = (gamma / 45) * MAX_TILT * GYROSCOPE_SCALE
-        applyTilt(card, rotateX, rotateY)
+        applyTilt(card, rotateX, rotateY, gamma / 45, beta / 45)
       })
     }
 
@@ -79,18 +83,7 @@ const PokemonCard = ({ pokemon, onClick }) => {
     const rect = card.getBoundingClientRect()
     const x = (e.clientX - rect.left) / rect.width
     const y = (e.clientY - rect.top) / rect.height
-    applyTilt(card, (0.5 - y) * MAX_TILT, (x - 0.5) * MAX_TILT)
-  }, [])
-
-  const handleTouchMove = useCallback((e) => {
-    const card = cardRef.current
-    if (!card) return
-    const touch = e.touches[0]
-    if (!touch) return
-    const rect = card.getBoundingClientRect()
-    const x = (touch.clientX - rect.left) / rect.width
-    const y = (touch.clientY - rect.top) / rect.height
-    applyTilt(card, (0.5 - y) * MAX_TILT, (x - 0.5) * MAX_TILT)
+    applyTilt(card, (0.5 - y) * MAX_TILT, (x - 0.5) * MAX_TILT, x - 0.5, y - 0.5)
   }, [])
 
   const handleLeave = useCallback(() => {
@@ -107,26 +100,35 @@ const PokemonCard = ({ pokemon, onClick }) => {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleLeave}
         onTouchStart={handleLeave}
-        onTouchMove={handleTouchMove}
         onTouchEnd={handleLeave}
         aria-label={`${pokemon.name}, number ${pokemon.pokedexNumber}. ${pokemon.type1}${pokemon.type2 ? ` and ${pokemon.type2}` : ''} type.`}
-        className="group relative w-full flex flex-col items-center pt-16 pb-4 px-3 rounded-2xl border border-white/5
-          bg-[#0a0a0a] overflow-visible
-          hover:border-white/15
+        className="group relative w-full flex flex-col items-center pt-16 pb-4 px-3 rounded-2xl
+          border border-white/[0.07] overflow-visible cursor-pointer
+          bg-[#0b0d13]
           transition-[border-color,box-shadow] duration-200
-          cursor-pointer"
-        style={{ transformStyle: 'preserve-3d', willChange: 'transform' }}
+          hover:border-white/20"
+        style={{
+          transformStyle: 'preserve-3d',
+          willChange: 'transform',
+          boxShadow: `0 14px 34px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)`,
+        }}
       >
-        <span className="absolute top-2 right-3 text-[10px] font-mono text-white/20 select-none" aria-hidden="true">
-          #{String(pokemon.pokedexNumber).padStart(3, '0')}
-        </span>
-
+        {/* depth glow */}
         <div
-          className="absolute inset-0 rounded-2xl opacity-30 group-hover:opacity-50 transition-opacity duration-200 pointer-events-none"
-          style={{ background: `radial-gradient(ellipse at 50% 20%, ${glow}55, transparent 70%)` }}
+          className="absolute inset-0 rounded-2xl opacity-40 group-hover:opacity-70 transition-opacity duration-300 pointer-events-none"
+          style={{ background: `radial-gradient(ellipse at 50% 18%, ${glow}40, transparent 72%)` }}
           aria-hidden="true"
         />
 
+        {/* holographic sheen */}
+        <div
+          className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none overflow-hidden transition-opacity duration-300"
+          aria-hidden="true"
+        >
+          <div className="pkx-sheen absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+        </div>
+
+        {/* pointer glare */}
         <div
           data-glare
           className="absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-300"
@@ -134,24 +136,62 @@ const PokemonCard = ({ pokemon, onClick }) => {
           aria-hidden="true"
         />
 
-        <img
-          src={getSpriteUrl(pokemon.pokedexNumber)}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          width={96}
-          height={96}
-          className="absolute -top-12 w-24 h-24 object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]
-            group-hover:scale-110 group-hover:-translate-y-1 will-change-transform
-            transition-transform duration-200 z-10"
-          onError={(e) => {
-            if (e.target.dataset.fallback) return
-            e.target.dataset.fallback = '1'
-            e.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.pokedexNumber}.png`
-          }}
-        />
+        {/* number — near depth */}
+        {!pokemon.baseNumber && (
+          <span
+            className="absolute top-2 right-3 text-[10px] font-mono text-white/20 select-none"
+            style={{ transform: 'translateZ(18px)' }}
+            aria-hidden="true"
+          >
+            #{String(pokemon.pokedexNumber).padStart(3, '0')}
+          </span>
+        )}
 
-        <div className="relative z-10 flex flex-col items-center gap-1.5 mt-4">
+        {pokemon.baseNumber && (
+          <span
+            className="absolute top-2 right-3 text-[9px] uppercase tracking-widest text-white/25 select-none"
+            style={{ transform: 'translateZ(18px)' }}
+            aria-hidden="true"
+          >
+            Form
+          </span>
+        )}
+
+        {/* sprite — pops out of the card, parallaxes with pointer */}
+        <div
+          className="absolute -top-12 left-1/2 -ml-12 w-24 h-24 pointer-events-none"
+          style={{
+            transform: 'translateZ(58px) translate3d(calc(var(--px, 0) * 14px), calc(var(--py, 0) * 9px), 0)',
+            transition: 'transform 0.15s ease-out',
+          }}
+        >
+          <div className="pkx-float-soft w-full h-full">
+            <img
+              src={getSpriteUrl(pokemon.pokedexNumber)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              width={96}
+              height={96}
+              className="w-24 h-24 object-contain drop-shadow-[0_14px_18px_rgba(0,0,0,0.65)]"
+              onError={(e) => {
+                if (e.target.dataset.fallback) return
+                e.target.dataset.fallback = '1'
+                e.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.pokedexNumber}.png`
+              }}
+            />
+          </div>
+        </div>
+
+        {/* name + types — mid depth */}
+        <div
+          className="relative z-10 flex flex-col items-center gap-1.5 mt-4"
+          style={{
+            transform: 'translateZ(26px) translate3d(calc(var(--px, 0) * 5px), calc(var(--py, 0) * 3px), 0)',
+            transition: 'transform 0.15s ease-out',
+          }}
+        >
           <h3 className="text-sm font-semibold capitalize leading-tight">{pokemon.name}</h3>
           <div className="flex gap-1.5">
             <TypeBadge type={pokemon.type1} />
@@ -161,6 +201,6 @@ const PokemonCard = ({ pokemon, onClick }) => {
       </button>
     </article>
   )
-}
+})
 
 export default PokemonCard
